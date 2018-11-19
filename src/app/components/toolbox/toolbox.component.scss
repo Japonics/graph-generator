@@ -1,0 +1,18 @@
+:host {
+  display: flex;
+  height: 100%;
+  background: transparentize(#222, 0.05);
+  border-right: #222;
+  flex-direction: column;
+  .wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+  }
+  .copyrights {
+    color: #fff;
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+  }
+}
