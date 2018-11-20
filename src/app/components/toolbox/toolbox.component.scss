@@ -1,9 +1,24 @@
 :host {
   display: flex;
   height: 100%;
-  background: transparentize(#222, 0.05);
-  border-right: #222;
+  background: transparentize(#f44336, 0.05);
+  border-right: #f44336;
   flex-direction: column;
+  header {
+    padding: 10px 20px;
+    h1 {
+      font-size: 16px;
+      font-weight: lighter;
+      text-align: center;
+      color: #fff;
+      padding: 10px 0;
+      border: 1px solid #fff;
+      border-radius: 10px;
+    }
+  }
+  .configuration {
+    flex-grow: 1;
+  }
   .wrapper {
     display: flex;
     justify-content: center;
@@ -14,5 +29,6 @@
     font-size: 12px;
     width: 100%;
     text-align: center;
+    margin-bottom: 5px;
   }
 }

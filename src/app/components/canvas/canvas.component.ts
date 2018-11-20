@@ -19,12 +19,12 @@ export class CanvasComponent implements OnInit, AfterViewInit {
   constructor(private _elementRef: ElementRef) {
   }
 
-  ngOnInit() {
+  public ngOnInit() {
   }
 
   public ngAfterViewInit() {
     // set up SVG for D3
-    const width = 500;
+    const width = this._elementRef.nativeElement.width;
     const height = 500;
     const colors = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -38,7 +38,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     //  - nodes are known by 'id', not by index in array.
     //  - reflexive edges are indicated on the node (as a bold black circle).
     //  - links are always source < target; edge directions are set by 'left' and 'right'.
-    const nodes = [
+    const nodes: any[] = [
       {id: 0, reflexive: false},
       {id: 1, reflexive: true},
       {id: 2, reflexive: false}
@@ -53,7 +53,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
     // init D3 force layout
     const force = d3.forceSimulation()
-      .force('link', d3.forceLink().id((d) => d.id).distance(150))
+      .force('link', d3.forceLink().id((d: any) => d.id).distance(150))
       .force('charge', d3.forceManyBody().strength(-500))
       .force('x', d3.forceX(width / 2))
       .force('y', d3.forceY(height / 2))
@@ -62,7 +62,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     // init D3 drag support
     const drag = d3.drag()
       .on('start', (d) => {
-        if (!d3.event.active) force.alphaTarget(0.3).restart();
+        if (!d3.event.active) {
+          force.alphaTarget(0.3).restart();
+        }
 
         d.fx = d.x;
         d.fy = d.y;
@@ -167,7 +169,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         .style('marker-start', (d) => d.left ? 'url(#start-arrow)' : '')
         .style('marker-end', (d) => d.right ? 'url(#end-arrow)' : '')
         .on('mousedown', (d) => {
-          if (d3.event.ctrlKey) return;
+          if (d3.event.ctrlKey) {
+            return;
+          }
 
           // select link
           mousedownLink = d;
@@ -233,7 +237,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         .on('mouseup', function (d) {
           if (!mousedownNode) {
             return;
-          };
+          }
 
           // needed by FF
           dragLine
@@ -281,7 +285,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       // set the graph in motion
       force
         .nodes(nodes)
-        .force('link').links(links);
+        .force('link')
+        .links(links);
 
       force.alphaTarget(0.3).restart();
     }
@@ -290,7 +295,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       // because :active only works in WebKit?
       svg.classed('active', true);
 
-      if (d3.event.ctrlKey || mousedownNode || mousedownLink) return;
+      if (d3.event.ctrlKey || mousedownNode || mousedownLink) {
+        return;
+      }
 
       // insert new node at point
       const point = d3.mouse(this);
@@ -301,7 +308,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     }
 
     function mousemove() {
-      if (!mousedownNode) return;
+      if (!mousedownNode) {
+        return;
+      }
 
       // update drag line
       dragLine.attr('d', `M${mousedownNode.x},${mousedownNode.y}L${d3.mouse(this)[0]},${d3.mouse(this)[1]}`);
@@ -337,17 +346,24 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     function keydown() {
       d3.event.preventDefault();
 
-      if (lastKeyDown !== -1) return;
+      if (lastKeyDown !== -1) {
+        return;
+      }
+      // noinspection JSDeprecatedSymbols
       lastKeyDown = d3.event.keyCode;
 
       // ctrl
+      // noinspection JSDeprecatedSymbols
       if (d3.event.keyCode === 17) {
         circle.call(drag);
         svg.classed('ctrl', true);
       }
 
-      if (!selectedNode && !selectedLink) return;
+      if (!selectedNode && !selectedLink) {
+        return;
+      }
 
+      // noinspection JSDeprecatedSymbols
       switch (d3.event.keyCode) {
         case 8: // backspace
         case 46: // delete
@@ -395,6 +411,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       lastKeyDown = -1;
 
       // ctrl
+      // noinspection JSDeprecatedSymbols
       if (d3.event.keyCode === 17) {
         circle.on('.drag', null);
         svg.classed('ctrl', false);

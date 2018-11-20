@@ -1,5 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {MatDialog} from '@angular/material';
+import {GenerateConfigurationComponent} from '../generate-configuration/generate-configuration.component';
+import {IGraphGenerationConfig} from '../../interfaces/graph-generation-config.interface';
 
 @Component({
   selector: 'app-toolbox',
@@ -15,11 +17,16 @@ export class ToolboxComponent implements OnInit {
   }
 
   public generateGraph() {
-    let generateGraphConfigModal = this.dialog.open(UserProfileComponent, {
-      height: '400px',
-      width: '600px',
+    const generateGraphConfigModal = this.dialog.open(GenerateConfigurationComponent, {
+      height: '350px',
+      width: '400px',
     });
 
+    generateGraphConfigModal.afterClosed().subscribe((config: IGraphGenerationConfig) => {
+      if (config) {
+        console.log('config', config);
+      }
+    });
 
   }
 
