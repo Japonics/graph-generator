@@ -1,7 +1,8 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, OnInit, Input} from '@angular/core';
 import {MatDialog} from '@angular/material';
 import {GenerateConfigurationComponent} from '../generate-configuration/generate-configuration.component';
 import {IGraphGenerationConfig} from '../../interfaces/graph-generation-config.interface';
+import {Subject} from 'rxjs';
 
 @Component({
   selector: 'app-toolbox',
@@ -9,6 +10,9 @@ import {IGraphGenerationConfig} from '../../interfaces/graph-generation-config.i
   styleUrls: ['./toolbox.component.scss']
 })
 export class ToolboxComponent implements OnInit {
+
+  @Input() configSender: Subject<IGraphGenerationConfig>;
+  @Input() logger: Subject<string>;
 
   constructor(public dialog: MatDialog) {
   }
@@ -24,7 +28,7 @@ export class ToolboxComponent implements OnInit {
 
     generateGraphConfigModal.afterClosed().subscribe((config: IGraphGenerationConfig) => {
       if (config) {
-        console.log('config', config);
+        this.configSender.next(config);
       }
     });
 

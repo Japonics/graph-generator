@@ -1,13 +1,11 @@
 Program
 
-Zadania: wygenerować graf, narysować graf, wydzielić cykle, pokazać cykle, zapisać cykle
+Zadania: wydzielić cykle, pokazać cykle, zapisać cykle
 
 a)	Generowanie grafu według: prawdopodobieństwa, limitu stopni wierzchołków n < 20, liczby krawędzi,
 Wygenerować wagi krawędzi, waga cyklu to suma wag wszystkich krawędzi cyklu.
-
 b)	Zapis grafu do struktury – macierzy incydencji;  a następnie stworzyć listę sąsiedztwa
 c)	Wygenerować wagi z zakresu 1-10;
-d)	Narysować graf we współrzędnych losowych  lub  na kole  lub   na  kratce – według zadań przypisanych grupom;
 e)	Wydzielić cykle długości 3 lub 4;
 Obliczyć ich wagi,  uporządkować dwa razy według nazw (leksykograficznie) oraz  według wag. 
 f)	Zapisać do pliku wynikowego:

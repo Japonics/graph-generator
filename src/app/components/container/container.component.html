@@ -1,6 +1,12 @@
 <div class="toolbox">
-  <app-toolbox></app-toolbox>
+  <app-toolbox [configSender]="configCommunicator"
+               [logger]="loggerCommunicator">
+  </app-toolbox>
 </div>
 <div class="canvas">
-  <app-canvas></app-canvas>
+  <app-canvas [configReceiver]="configCommunicator"
+              [logger]="loggerCommunicator"></app-canvas>
+</div>
+<div class="logger-container">
+  <app-console [writter]="loggerCommunicator"></app-console>
 </div>

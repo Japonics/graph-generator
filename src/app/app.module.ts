@@ -16,6 +16,7 @@ import {ContainerComponent} from './components/container/container.component';
 import {CanvasComponent} from './components/canvas/canvas.component';
 import {ToolboxComponent} from './components/toolbox/toolbox.component';
 import {GenerateConfigurationComponent} from './components/generate-configuration/generate-configuration.component';
+import {ConsoleComponent} from './components/console/console.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +24,8 @@ import {GenerateConfigurationComponent} from './components/generate-configuratio
     ContainerComponent,
     CanvasComponent,
     ToolboxComponent,
-    GenerateConfigurationComponent
+    GenerateConfigurationComponent,
+    ConsoleComponent
   ],
   imports: [
     BrowserModule,

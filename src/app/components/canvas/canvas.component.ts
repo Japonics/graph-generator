@@ -3,9 +3,12 @@ import {
   OnInit,
   AfterViewInit,
   ElementRef,
-  ViewChild
+  ViewChild,
+  Input
 } from '@angular/core';
 import * as d3 from 'd3';
+import {IGraphGenerationConfig} from '../../interfaces/graph-generation-config.interface';
+import {Subject, Subscription} from 'rxjs';
 
 @Component({
   selector: 'app-canvas',
@@ -14,17 +17,26 @@ import * as d3 from 'd3';
 })
 export class CanvasComponent implements OnInit, AfterViewInit {
 
+  @Input() configReceiver: Subject<IGraphGenerationConfig>;
+  @Input() logger: Subject<string>;
+
   @ViewChild('canvas', {read: ElementRef}) canvas: ElementRef;
+
+  private _subscriptions: Subscription[] = [];
 
   constructor(private _elementRef: ElementRef) {
   }
 
   public ngOnInit() {
+    this._subscriptions.push(this.configReceiver.subscribe((configuration: IGraphGenerationConfig) => {
+
+    }));
   }
 
   public ngAfterViewInit() {
+
     // set up SVG for D3
-    const width = this._elementRef.nativeElement.width;
+    const width = 500;
     const height = 500;
     const colors = d3.scaleOrdinal(d3.schemeCategory10);
 
@@ -41,14 +53,28 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     const nodes: any[] = [
       {id: 0, reflexive: false},
       {id: 1, reflexive: true},
-      {id: 2, reflexive: false}
+      {id: 2, reflexive: false},
+      {id: 3, reflexive: false},
+      {id: 4, reflexive: false},
+      {id: 5, reflexive: false},
+      {id: 6, reflexive: false},
+      {id: 7, reflexive: false},
+      {id: 8, reflexive: false},
+      {id: 9, reflexive: false}
     ];
 
     let lastNodeId = 2;
 
     const links = [
-      {source: nodes[0], target: nodes[1], left: false, right: true},
-      {source: nodes[1], target: nodes[2], left: false, right: true}
+      {source: nodes[0], target: nodes[1], left: true, right: true},
+      {source: nodes[1], target: nodes[2], left: true, right: true},
+      {source: nodes[2], target: nodes[3], left: true, right: true},
+      {source: nodes[3], target: nodes[4], left: true, right: true},
+      {source: nodes[4], target: nodes[5], left: true, right: true},
+      {source: nodes[5], target: nodes[6], left: true, right: true},
+      {source: nodes[6], target: nodes[7], left: true, right: true},
+      {source: nodes[7], target: nodes[8], left: true, right: true},
+      {source: nodes[8], target: nodes[9], left: true, right: true},
     ];
 
     // init D3 force layout
@@ -426,5 +452,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       .on('keydown', keydown)
       .on('keyup', keyup);
     restart();
+  }
+
+  private prepareRenderConfig(config: IGraphGenerationConfig) {
+    const assignedVertex: {[index: number]: number} = {};
   }
 }
