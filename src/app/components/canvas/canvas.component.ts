@@ -29,23 +29,11 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
   public ngOnInit() {
     this._subscriptions.push(this.configReceiver.subscribe((configuration: IGraphGenerationConfig) => {
-
+      this._prepareRenderConfig(configuration);
     }));
   }
 
   public ngAfterViewInit() {
-
-    // set up SVG for D3
-    const width = 500;
-    const height = 500;
-    const colors = d3.scaleOrdinal(d3.schemeCategory10);
-
-    const svg = d3.select(this.canvas.nativeElement)
-      .append('svg')
-      .attr('oncontextmenu', 'return false;')
-      .attr('width', width)
-      .attr('height', height);
-
     // set up initial nodes and links
     //  - nodes are known by 'id', not by index in array.
     //  - reflexive edges are indicated on the node (as a bold black circle).
@@ -63,8 +51,6 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       {id: 9, reflexive: false}
     ];
 
-    let lastNodeId = 2;
-
     const links = [
       {source: nodes[0], target: nodes[1], left: true, right: true},
       {source: nodes[1], target: nodes[2], left: true, right: true},
@@ -77,6 +63,60 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       {source: nodes[8], target: nodes[9], left: true, right: true},
     ];
 
+    this._render(nodes, links);
+  }
+
+  private _prepareRenderConfig(config: IGraphGenerationConfig) {
+    const assignedVertex: {[index: number]: number} = {};
+    const nodes: any[] = [];
+    const links: any[] = [];
+
+    for (let index = 0; index < config.vertex; index++) {
+      nodes.push({id: index, reflexive: false});
+    }
+
+    const probability = config.probability / 100;
+
+    for (let currentNode = 0; currentNode < config.vertex; currentNode++) {
+      for (let linkNode = 0; linkNode < config.vertex; linkNode++) {
+        if (currentNode === linkNode) {
+          continue;
+        }
+
+        const rand = (Math.floor((Math.random() * 100) + 1)) / 100;
+        if (rand > probability) {
+          if (assignedVertex[currentNode] === undefined) {
+            assignedVertex[currentNode] = 0;
+          }
+
+          if (assignedVertex[currentNode] >= config.edges) {
+            continue;
+          }
+
+          assignedVertex[currentNode]++;
+          links.push({source: nodes[currentNode], target: nodes[linkNode], left: true, right: true});
+        }
+      }
+    }
+
+    this._render(nodes, links);
+  }
+
+  private _render(nodes: any[], links: any[]): void {
+    // set up SVG for D3
+    const width = 500;
+    const height = 500;
+    const colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const svg = d3.select(this.canvas.nativeElement)
+      .append('svg')
+      .attr('oncontextmenu', 'return false;')
+      .attr('width', width)
+      .attr('height', height);
+
+    const lastNode = nodes[nodes.length - 1];
+    let lastNodeId = lastNode.id;
+
     // init D3 force layout
     const force = d3.forceSimulation()
       .force('link', d3.forceLink().id((d: any) => d.id).distance(150))
@@ -87,7 +127,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
     // init D3 drag support
     const drag = d3.drag()
-      .on('start', (d) => {
+      .on('start', (d: any) => {
         if (!d3.event.active) {
           force.alphaTarget(0.3).restart();
         }
@@ -95,11 +135,11 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         d.fx = d.x;
         d.fy = d.y;
       })
-      .on('drag', (d) => {
+      .on('drag', (d: any) => {
         d.fx = d3.event.x;
         d.fy = d3.event.y;
       })
-      .on('end', (d) => {
+      .on('end', (d: any) => {
         if (!d3.event.active) {
           force.alphaTarget(0);
         }
@@ -156,7 +196,7 @@ export class CanvasComponent implements OnInit, AfterViewInit {
     // update force layout (called automatically each iteration)
     function tick() {
       // draw directed edges with proper padding from node centers
-      path.attr('d', (d) => {
+      path.attr('d', (d: any) => {
         const deltaX = d.target.x - d.source.x;
         const deltaY = d.target.y - d.source.y;
         const dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -172,18 +212,18 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         return `M${sourceX},${sourceY}L${targetX},${targetY}`;
       });
 
-      circle.attr('transform', (d) => `translate(${d.x},${d.y})`);
+      circle.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     }
 
-  // update graph (called when needed)
+    // update graph (called when needed)
     function restart() {
       // path (link) group
       path = path.data(links);
 
       // update existing links
       path.classed('selected', (d) => d === selectedLink)
-        .style('marker-start', (d) => d.left ? 'url(#start-arrow)' : '')
-        .style('marker-end', (d) => d.right ? 'url(#end-arrow)' : '');
+        .style('marker-start', (d: any) => d.left ? 'url(#start-arrow)' : '')
+        .style('marker-end', (d: any) => d.right ? 'url(#end-arrow)' : '');
 
       // remove old links
       path.exit().remove();
@@ -192,8 +232,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       path = path.enter().append('svg:path')
         .attr('class', 'link')
         .classed('selected', (d) => d === selectedLink)
-        .style('marker-start', (d) => d.left ? 'url(#start-arrow)' : '')
-        .style('marker-end', (d) => d.right ? 'url(#end-arrow)' : '')
+        .style('marker-start', (d: any) => d.left ? 'url(#start-arrow)' : '')
+        .style('marker-end', (d: any) => d.right ? 'url(#end-arrow)' : '')
         .on('mousedown', (d) => {
           if (d3.event.ctrlKey) {
             return;
@@ -213,8 +253,8 @@ export class CanvasComponent implements OnInit, AfterViewInit {
 
       // update existing nodes (reflexive & selected visual states)
       circle.selectAll('circle')
-        .style('fill', (d) => (d === selectedNode) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id))
-        .classed('reflexive', (d) => d.reflexive);
+        .style('fill', (d: any) => (d === selectedNode) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id))
+        .classed('reflexive', (d: any) => d.reflexive);
 
       // remove old nodes
       circle.exit().remove();
@@ -225,9 +265,9 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       g.append('svg:circle')
         .attr('class', 'node')
         .attr('r', 12)
-        .style('fill', (d) => (d === selectedNode) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id))
-        .style('stroke', (d) => d3.rgb(colors(d.id)).darker().toString())
-        .classed('reflexive', (d) => d.reflexive)
+        .style('fill', (d: any) => (d === selectedNode) ? d3.rgb(colors(d.id)).brighter().toString() : colors(d.id))
+        .style('stroke', (d: any) => d3.rgb(colors(d.id)).darker().toString())
+        .classed('reflexive', (d: any) => d.reflexive)
         .on('mouseover', function (d) {
           if (!mousedownNode || d === mousedownNode) {
             return;
@@ -304,11 +344,12 @@ export class CanvasComponent implements OnInit, AfterViewInit {
         .attr('x', 0)
         .attr('y', 4)
         .attr('class', 'id')
-        .text((d) => d.id);
+        .text((d: any) => d.id);
 
       circle = g.merge(circle);
 
       // set the graph in motion
+      // @ts-ignore
       force
         .nodes(nodes)
         .force('link')
@@ -452,9 +493,5 @@ export class CanvasComponent implements OnInit, AfterViewInit {
       .on('keydown', keydown)
       .on('keyup', keyup);
     restart();
-  }
-
-  private prepareRenderConfig(config: IGraphGenerationConfig) {
-    const assignedVertex: {[index: number]: number} = {};
   }
 }

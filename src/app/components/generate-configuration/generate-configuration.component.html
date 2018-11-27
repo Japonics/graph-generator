@@ -1,19 +1,13 @@
 <h1 mat-dialog-title>Generator configuration</h1>
 <div mat-dialog-content>
   <mat-form-field class="full-width">
-    <input matInput placeholder="Probability [1%-100%]" [(ngModel)]="data.probability" type="number" min="1" max="100" required>
-  </mat-form-field>
-  <mat-slider
-    thumbLabel
-    [displayWith]="'text'"
-    tickInterval="1000"
-    min="1"
-    max="100"></mat-slider>
-  <mat-form-field class="full-width">
     <input matInput placeholder="Limit of vertex [1-20]" [(ngModel)]="data.vertex" type="number" min="1" max="20" required>
   </mat-form-field>
   <mat-form-field class="full-width">
-    <input matInput placeholder="Count of edges" [(ngModel)]="data.edges" type="number" min="1" required>
+    <input matInput placeholder="Probability [1%-100%]" [(ngModel)]="data.probability" type="number" min="1" max="100" required>
+  </mat-form-field>
+  <mat-form-field class="full-width">
+    <input matInput placeholder="Max count of edges for vertex [1-20]" [(ngModel)]="data.edges" type="number" min="1" max="20" required>
   </mat-form-field>
 </div>
 <div mat-dialog-actions>

@@ -7,7 +7,8 @@ import {
   MatButtonModule,
   MatDialogModule,
   MatFormFieldModule,
-  MatInputModule
+  MatInputModule,
+  MatSliderModule
 } from '@angular/material';
 
 import {AppRoutingModule} from './app-routing.module';
@@ -35,7 +36,8 @@ import {ConsoleComponent} from './components/console/console.component';
     MatButtonModule,
     MatDialogModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    MatSliderModule
   ],
   providers: [],
   bootstrap: [AppComponent],
