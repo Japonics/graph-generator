@@ -1,4 +1,5 @@
 import {BrowserModule} from '@angular/platform-browser';
+import {CommonModule} from '@angular/common';
 import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms'
 import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
@@ -37,7 +38,8 @@ import {ConsoleComponent} from './components/console/console.component';
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSliderModule
+    MatSliderModule,
+    CommonModule
   ],
   providers: [],
   bootstrap: [AppComponent],

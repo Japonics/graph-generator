@@ -20,7 +20,7 @@ export class ToolboxComponent implements OnInit {
   public ngOnInit() {
   }
 
-  public generateGraph() {
+  public generateGraph(): void {
     const generateGraphConfigModal = this.dialog.open(GenerateConfigurationComponent, {
       height: '350px',
       width: '400px',
@@ -31,10 +31,9 @@ export class ToolboxComponent implements OnInit {
         this.configSender.next(config);
       }
     });
-
   }
 
-  public generateFile() {
+  public generateFile(): void {
 
   }
 }

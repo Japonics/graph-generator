@@ -1,0 +1,17 @@
+<div class="logger-container">
+  <ng-container *ngFor="let message of messages">
+    <ng-container *ngIf="message === 'separator'">
+      <p class="separator">
+        ____________________________________________
+      </p>
+    </ng-container>
+    <ng-container *ngIf="message !== 'separator'">
+      <p>{{message}}</p>
+    </ng-container>
+  </ng-container>
+</div>
+<div class="options">
+  <span>
+    <img src=""/>
+  </span>
+</div>

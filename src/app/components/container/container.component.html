@@ -3,10 +3,9 @@
                [logger]="loggerCommunicator">
   </app-toolbox>
 </div>
-<div class="canvas">
-  <app-canvas [configReceiver]="configCommunicator"
-              [logger]="loggerCommunicator"></app-canvas>
+<div class="content">
+    <app-canvas [configReceiver]="configCommunicator"
+                [logger]="loggerCommunicator"></app-canvas>
+    <app-console [writter]="loggerCommunicator"></app-console>
 </div>
-<div class="logger-container">
-  <app-console [writter]="loggerCommunicator"></app-console>
-</div>
+

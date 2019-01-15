@@ -10,18 +10,20 @@ export class ConsoleComponent implements OnInit, OnDestroy {
 
   @Input() writter: Subject<string>;
 
+  public messages: string[] = [];
+
   private _subscriptions: Subscription[] = [];
 
   constructor() {
   }
 
-  public ngOnInit() {
+  public ngOnInit(): void {
     this._subscriptions.push(this.writter.subscribe((log: string) => {
-
+      this.messages.push(log);
     }));
   }
 
-  public ngOnDestroy() {
+  public ngOnDestroy(): void {
     this._subscriptions.map(sub => sub.unsubscribe());
   }
 }
