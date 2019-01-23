@@ -1,11 +1,17 @@
 <div class="toolbox">
   <app-toolbox [configSender]="configCommunicator"
+               [onRegenerateNeighborhoodMatrix]="onRegenerateNeighborhoodMatrix"
+               [onRegenerateListOfIncidents]="onRegenerateListOfIncidents"
                [logger]="loggerCommunicator">
   </app-toolbox>
 </div>
 <div class="content">
     <app-canvas [configReceiver]="configCommunicator"
-                [logger]="loggerCommunicator"></app-canvas>
-    <app-console [writter]="loggerCommunicator"></app-console>
+                [onRegenerateNeighborhoodMatrix]="onRegenerateNeighborhoodMatrix"
+                [onRegenerateListOfIncidents]="onRegenerateListOfIncidents"
+                [logger]="loggerCommunicator">
+    </app-canvas>
+    <app-console [writter]="loggerCommunicator">
+    </app-console>
 </div>
 

@@ -12,7 +12,9 @@ import {Subject} from 'rxjs';
 export class ToolboxComponent implements OnInit {
 
   @Input() configSender: Subject<IGraphGenerationConfig>;
-  @Input() logger: Subject<string>;
+  @Input() logger: Subject<HTMLDivElement>;
+  @Input() onRegenerateNeighborhoodMatrix: Subject<boolean> = new Subject<boolean>();
+  @Input() onRegenerateListOfIncidents: Subject<boolean> = new Subject<boolean>();
 
   constructor(public dialog: MatDialog) {
   }
@@ -31,6 +33,23 @@ export class ToolboxComponent implements OnInit {
         this.configSender.next(config);
       }
     });
+  }
+
+  public regenerateNeighborhoodMatrix(): void {
+    if (this.onRegenerateNeighborhoodMatrix) {
+      this.onRegenerateNeighborhoodMatrix.next(true);
+    }
+  }
+
+  public regenerateListOfIncidents(): void {
+    if (this.onRegenerateListOfIncidents) {
+      this.onRegenerateListOfIncidents.next(true);
+    }
+  }
+
+  public regenerateAll(): void {
+    this.regenerateNeighborhoodMatrix();
+    this.regenerateListOfIncidents();
   }
 
   public generateFile(): void {

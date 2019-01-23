@@ -1,17 +1,17 @@
-<div class="logger-container">
-  <ng-container *ngFor="let message of messages">
-    <ng-container *ngIf="message === 'separator'">
-      <p class="separator">
-        ____________________________________________
-      </p>
-    </ng-container>
-    <ng-container *ngIf="message !== 'separator'">
-      <p>{{message}}</p>
-    </ng-container>
-  </ng-container>
-</div>
-<div class="options">
-  <span>
-    <img src=""/>
+<div class="logger-header">
+  <span class="minimize" (click)="minimize()">
+    <img alt="Minimize" src="../../../assets/icons/minimize.svg"/>
   </span>
+  <h2>Console</h2>
 </div>
+<div class="logger-panel">
+  <div id="logger-container" class="logger-container">
+
+  </div>
+  <div class="options">
+  <span class="option" (click)="clearConsole()">
+    <img alt="Clear" src="../../../assets/icons/trash.svg"/>
+  </span>
+  </div>
+</div>
+

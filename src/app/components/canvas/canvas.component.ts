@@ -22,7 +22,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
 
   @Input() configReceiver: Subject<IGraphGenerationConfig>;
-  @Input() logger: Subject<string>;
+  @Input() logger: Subject<HTMLDivElement>;
+  @Input() onRegenerateNeighborhoodMatrix: Subject<boolean> = new Subject<boolean>();
+  @Input() onRegenerateListOfIncidents: Subject<boolean> = new Subject<boolean>();
 
   @ViewChild('canvas', {read: ElementRef}) canvas: ElementRef;
 
@@ -60,10 +62,21 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subscriptions = this.configReceiver.subscribe((configuration: IGraphGenerationConfig) => {
       this._prepareRenderConfig(configuration);
     });
+
+    if (this.onRegenerateNeighborhoodMatrix) {
+      this.subscriptions = this.onRegenerateNeighborhoodMatrix.subscribe(() => {
+        this._prepareNeighborhoodMatrix();
+      });
+    }
+
+    if (this.onRegenerateListOfIncidents) {
+      this.subscriptions = this.onRegenerateListOfIncidents.subscribe(() => {
+        this._prepareListOfIncidents();
+      });
+    }
   }
 
   public ngAfterViewInit(): void {
-
     // set up initial nodes and links
     //  - nodes are known by 'id', not by index in array.
     //  - reflexive edges are indicated on the node (as a bold black circle).
@@ -93,9 +106,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       {source: this._nodes[8], target: this._nodes[9], left: true, right: true},
     ];
 
+    this._createCanvas();
     this._prepareNeighborhoodMatrix();
     this._prepareListOfIncidents();
-    this._render();
   }
 
   public ngOnDestroy(): void {
@@ -103,7 +116,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private _prepareRenderConfig(config: IGraphGenerationConfig): void {
-    const assignedVertex: {[index: number]: number} = {};
+    const assignedVertex: { [index: number]: number } = {};
     this._nodes = [];
     this._links = [];
 
@@ -125,7 +138,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         }
 
         const rand = (Math.floor((Math.random() * 100) + 1)) / 100;
-        if (rand > probability) {
+        if (probability > rand) {
           if (assignedVertex[currentNode] === undefined) {
             assignedVertex[currentNode] = 0;
           }
@@ -150,13 +163,13 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this._prepareNeighborhoodMatrix();
     this._prepareListOfIncidents();
-    this._render();
+    this.restart();
   }
 
   private _prepareNeighborhoodMatrix(): void {
-    let messages: string[] = [];
     const matrix: any = {};
-    let header: string = '';
+    const tableHeader: HTMLTableSectionElement = document.createElement('thead');
+    const tableBody: HTMLTableSectionElement = document.createElement('tbody');
 
     this._links
       .map(target => {
@@ -168,80 +181,105 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
       });
 
-    header += '# | ';
+    const tableHeaderRow = document.createElement('tr');
+    const headerCellSep = document.createElement('td');
+    headerCellSep.innerText = '#';
+    tableHeaderRow.append(headerCellSep);
+
     for (let row = 0; row < this._nodes.length; row++) {
-      header += `${row} `;
+      const headerCell = document.createElement('td');
+      headerCell.innerText = '' + row;
+      tableHeaderRow.append(headerCell);
     }
 
-      for (let row = 0; row < this._nodes.length; row++) {
-      let message: string = `${row} | `;
+    tableHeader.append(tableHeaderRow);
+
+    for (let row = 0; row < this._nodes.length; row++) {
+      const tableBodyRow = document.createElement('tr');
+      const firstCell = document.createElement('td');
+      firstCell.innerText = '' + row;
+      tableBodyRow.append(firstCell);
+
       for (let col = 0; col < this._nodes.length; col++) {
+        const cell = document.createElement('td');
         if (matrix[row]) {
           if (matrix[row][col]) {
-            message += '1 ';
+            cell.innerText = '1';
+            tableBodyRow.append(cell);
             continue;
           }
         }
 
-        message += '0 ';
+        cell.innerText = '0';
+        tableBodyRow.append(cell);
       }
 
-      messages.push(message);
+      tableBody.append(tableBodyRow);
     }
 
-    this.logger.next('Neighborhood matrix:');
-    this.logger.next('');
-    this.logger.next(header);
-    this.logger.next('separator');
-    for(const message of messages) {
-      this.logger.next(message);
-    }
+    const message: HTMLDivElement = document.createElement('div');
+    message.className = 'message-container';
+    const header = document.createElement('p');
+    header.innerText = 'Neighborhood matrix:';
+    header.className = 'message-header';
+    message.append(header);
+    const separator = document.createElement('br');
+    message.append(separator);
+    const table = document.createElement('table');
+    table.append(tableHeader);
+    table.append(tableBody);
+    message.append(table);
 
-    this.logger.next('########################');
-    this.logger.next('');
+    this.logger.next(message);
+
     return;
   }
 
   private _prepareListOfIncidents(): void {
-    console.log('_prepareListOfIncidents');
-    const messages: string[] = [];
     const matrix: any = {};
 
     this._links.map(link => {
-        if (!matrix[link.source.id]) {
-          matrix[link.source.id] = [];
-        }
+      if (!matrix[link.source.id]) {
+        matrix[link.source.id] = [];
+      }
 
-        matrix[link.source.id].push(link.target.id);
-      });
+      matrix[link.source.id].push(link.target.id);
+    });
+
+    const message = document.createElement('div');
+    message.className = 'message-container';
+    const header = document.createElement('p');
+    header.innerText = 'List of incidents:';
+    header.className = 'message-header';
+    message.append(header);
+    const separator = document.createElement('br');
+    message.append(separator);
+    const table = document.createElement('table');
+    const tableBody = document.createElement('thead');
+
 
     for (const id in matrix) {
       if (matrix.hasOwnProperty(id)) {
-        let message: string = `${id}: `;
+
+        const row = document.createElement('tr');
+
         for (const incident of matrix[id]) {
-          message += `${incident}, `
+          const cell = document.createElement('td');
+          cell.innerText = incident;
+          row.append(cell);
         }
-        messages.push(message);
+
+        tableBody.append(row);
       }
     }
 
-    this.logger.next('List of incidents:');
-    this.logger.next('');
-    this.logger.next('separator');
+    table.append(tableBody);
+    message.append(table);
 
-    for(const message of messages) {
-      this.logger.next(message);
-    }
-
-    this.logger.next('########################');
-    this.logger.next('');
+    this.logger.next(message);
   }
 
-  private _render(): void {
-
-    if (this._canvas) {
-      (<Selection>this._canvas).empty()
-    }
+  private _createCanvas(): void {
 
     // set up SVG for D3
     const width = this._elementRef.nativeElement.offsetWidth;
@@ -253,9 +291,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       .attr('oncontextmenu', 'return false;')
       .attr('width', width)
       .attr('height', height);
-
-    this._lastNode = this._nodes[this._nodes.length - 1];
-    this._lastNodeId = this._lastNode.id;
 
     // init D3 force layout
     this._force = d3.forceSimulation()
@@ -327,14 +362,29 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this._mousedownNode = null;
     this._mouseupNode = null;
 
-  // only respond once per keydown
+    // only respond once per keydown
     this._lastKeyDown = -1;
 
+    const mousedown: Function = this.mousedown;
+    const mousemove: Function = this.mousemove;
+    const mouseup: Function = this.mouseup;
 
-  // app starts here
-    this._canvas.on('mousedown', this.mousedown)
-      .on('mousemove', this.mousemove)
-      .on('mouseup', this.mouseup);
+    // app starts here
+    // this.mousedown
+    this._canvas
+      .on('mousedown', function () {
+        const context = this;
+        mousedown(context);
+      })
+      .on('mousemove', function () {
+        const context = this;
+        mousemove(context);
+      })
+      .on('mouseup', function () {
+        const context = this;
+        mouseup(context);
+      });
+
     d3.select(window)
       .on('keydown', this.keydown)
       .on('keyup', this.keyup);
@@ -452,6 +502,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // update graph (called when needed)
   public restart = (): void => {
+    this._lastNode = this._nodes[this._nodes.length - 1];
+    this._lastNodeId = this._lastNode.id;
+
     // path (link) group
     this._path = this._path.data(this._links);
 
@@ -525,7 +578,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this._force.alphaTarget(0.3).restart();
   };
 
-  public onMouseover = (d):void => {
+  public onMouseover = (d): void => {
     if (!this._mousedownNode || d === this._mousedownNode) {
       return;
     }
@@ -611,8 +664,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // insert new node at point
-    // FIX
-    const point = d3.mouse(elem.target);
+    const point = d3.mouse(elem);
 
     const node: INode = {
       id: ++this._lastNodeId,
@@ -632,7 +684,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     // update drag line
-    this._dragLine.attr('d', `M${this._mousedownNode.x},${this._mousedownNode.y}L${d3.mouse(elem.target)[0]},${d3.mouse(elem.target)[1]}`);
+    this._dragLine.attr('d', `M${this._mousedownNode.x},${this._mousedownNode.y}L${d3.mouse(elem)[0]},${d3.mouse(elem)[1]}`);
 
     this.restart();
   };
@@ -658,5 +710,5 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     for (const l of toSplice) {
       this._links.splice(this._links.indexOf(l), 1);
     }
-  }
+  };
 }

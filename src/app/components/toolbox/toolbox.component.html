@@ -1,11 +1,17 @@
 <header>
+  <span class="logo">
+    <img alt="Logo" src="../../../assets/icons/graph.svg"/>
+  </span>
   <h1>GraphGenerator</h1>
 </header>
 <div class="wrapper">
   <button mat-flat-button (click)="generateGraph()">Generate graph</button>
 </div>
 <div class="configuration">
-
+  <h2>Regenerate:</h2>
+  <button mat-flat-button class="option" (click)="regenerateNeighborhoodMatrix()">Neighborhood matrix</button>
+  <button mat-flat-button class="option" (click)="regenerateListOfIncidents()">List of incidents</button>
+  <button mat-flat-button class="option" (click)="regenerateAll()">Regenerate all</button>
 </div>
 <div class="wrapper">
   <button mat-flat-button (click)="generateFile()">Generate file</button>
