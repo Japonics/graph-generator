@@ -2,6 +2,8 @@
   <app-toolbox [configSender]="configCommunicator"
                [onRegenerateNeighborhoodMatrix]="onRegenerateNeighborhoodMatrix"
                [onRegenerateListOfIncidents]="onRegenerateListOfIncidents"
+               [onSearch3Cycles]="onSearch3Cycles"
+               [onSearch4Cycles]="onSearch4Cycles"
                [logger]="loggerCommunicator">
   </app-toolbox>
 </div>
@@ -9,6 +11,8 @@
     <app-canvas [configReceiver]="configCommunicator"
                 [onRegenerateNeighborhoodMatrix]="onRegenerateNeighborhoodMatrix"
                 [onRegenerateListOfIncidents]="onRegenerateListOfIncidents"
+                [onSearch3Cycles]="onSearch3Cycles"
+                [onSearch4Cycles]="onSearch4Cycles"
                 [logger]="loggerCommunicator">
     </app-canvas>
     <app-console [writter]="loggerCommunicator">

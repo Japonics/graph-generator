@@ -13,6 +13,8 @@ export class ContainerComponent {
   public loggerCommunicator: Subject<HTMLDivElement> = new Subject<HTMLDivElement>();
   public onRegenerateNeighborhoodMatrix: Subject<boolean> = new Subject<boolean>();
   public onRegenerateListOfIncidents: Subject<boolean> = new Subject<boolean>();
+  public onSearch3Cycles: Subject<boolean> = new Subject<boolean>();
+  public onSearch4Cycles: Subject<boolean> = new Subject<boolean>();
 
   constructor() {
   }

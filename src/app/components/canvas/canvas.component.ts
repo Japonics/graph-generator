@@ -25,6 +25,8 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() logger: Subject<HTMLDivElement>;
   @Input() onRegenerateNeighborhoodMatrix: Subject<boolean> = new Subject<boolean>();
   @Input() onRegenerateListOfIncidents: Subject<boolean> = new Subject<boolean>();
+  @Input() onSearch3Cycles: Subject<boolean> = new Subject<boolean>();
+  @Input() onSearch4Cycles: Subject<boolean> = new Subject<boolean>();
 
   @ViewChild('canvas', {read: ElementRef}) canvas: ElementRef;
 
@@ -72,6 +74,18 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.onRegenerateListOfIncidents) {
       this.subscriptions = this.onRegenerateListOfIncidents.subscribe(() => {
         this._prepareListOfIncidents();
+      });
+    }
+
+    if (this.onSearch3Cycles) {
+      this.subscriptions = this.onSearch3Cycles.subscribe(() => {
+
+      });
+    }
+
+    if (this.onSearch4Cycles) {
+      this.subscriptions = this.onSearch4Cycles.subscribe(() => {
+
       });
     }
   }
@@ -235,8 +249,28 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     return;
   }
 
+  private _searchForCycles(): void {
+
+    const cycles: {[index: number]: number[]} = {};
+    const incidents: {[index: number]: number[]} = this._prepareListOfIncidentsAlgorithm();
+
+    for (const node of this._nodes) {
+      let counter: number = 3;
+      cycles[node.id] = this._recursiveCycleSearch(node, node, counter, [], incidents);
+    }
+  }
+
+  private _recursiveCycleSearch(start: INode, currentNode: INode, counter: number, nodes: number[], incidents: {[index: number]: number[]}): number[] {
+    return [];
+  }
+
   private _prepareListOfIncidents(): void {
-    const matrix: any = {};
+    const matrix = this._prepareListOfIncidentsAlgorithm();
+    this._printListOfIncidents(matrix);
+  }
+
+  private _prepareListOfIncidentsAlgorithm(): {[index: number]: number[]} {
+    const matrix: {[index: number]: number[]} = {};
 
     this._links.map(link => {
       if (!matrix[link.source.id]) {
@@ -246,6 +280,28 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       matrix[link.source.id].push(link.target.id);
     });
 
+    this._links.map(link => {
+      if (!matrix[link.target.id]) {
+        matrix[link.target.id] = [];
+      }
+
+      if (!matrix[link.target.id].some(x => x === link.source.id)) {
+        matrix[link.target.id].push(link.source.id);
+      }
+    });
+
+    for (const id in matrix) {
+      if (matrix.hasOwnProperty(id)) {
+        const temp: number[] = matrix[id];
+
+        matrix[id] = temp.sort((a, b) => a - b);
+      }
+    }
+
+    return matrix;
+  }
+
+  private _printListOfIncidents(matrix: {[index: number]: number[]}): void {
     const message = document.createElement('div');
     message.className = 'message-container';
     const header = document.createElement('p');
@@ -262,10 +318,16 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       if (matrix.hasOwnProperty(id)) {
 
         const row = document.createElement('tr');
+        const firstCell = document.createElement('td');
+        firstCell.innerText = id;
+        const separatorCell = document.createElement('td');
+        separatorCell.innerText = ';';
+        row.append(firstCell);
+        row.append(separatorCell);
 
         for (const incident of matrix[id]) {
           const cell = document.createElement('td');
-          cell.innerText = incident;
+          cell.innerText = '' + incident;
           row.append(cell);
         }
 

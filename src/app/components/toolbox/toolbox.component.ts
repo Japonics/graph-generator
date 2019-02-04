@@ -15,6 +15,8 @@ export class ToolboxComponent implements OnInit {
   @Input() logger: Subject<HTMLDivElement>;
   @Input() onRegenerateNeighborhoodMatrix: Subject<boolean> = new Subject<boolean>();
   @Input() onRegenerateListOfIncidents: Subject<boolean> = new Subject<boolean>();
+  @Input() onSearch3Cycles: Subject<boolean> = new Subject<boolean>();
+  @Input() onSearch4Cycles: Subject<boolean> = new Subject<boolean>();
 
   constructor(public dialog: MatDialog) {
   }
@@ -54,5 +56,18 @@ export class ToolboxComponent implements OnInit {
 
   public generateFile(): void {
 
+  }
+
+  public search3Cycles(): void {
+    this.onSearch3Cycles.next(true);
+  }
+
+  public search4Cycles(): void {
+    this.onSearch4Cycles.next(true);
+  }
+
+  public searchAll(): void {
+    this.onSearch3Cycles.next(true);
+    this.onSearch4Cycles.next(true);
   }
 }
