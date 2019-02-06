@@ -79,13 +79,13 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.onSearch3Cycles) {
       this.subscriptions = this.onSearch3Cycles.subscribe(() => {
-
+        this._searchForCycles(3);
       });
     }
 
     if (this.onSearch4Cycles) {
       this.subscriptions = this.onSearch4Cycles.subscribe(() => {
-
+        this._searchForCycles(4);
       });
     }
   }
@@ -249,19 +249,70 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     return;
   }
 
-  private _searchForCycles(): void {
+  private _searchForCycles(nodeForCycles: number): void {
 
-    const cycles: {[index: number]: number[]} = {};
     const incidents: {[index: number]: number[]} = this._prepareListOfIncidentsAlgorithm();
+    const foundCycles: {[index: number]: number[]} = {};
 
     for (const node of this._nodes) {
-      let counter: number = 3;
-      cycles[node.id] = this._recursiveCycleSearch(node, node, counter, [], incidents);
+      let counter: number = nodeForCycles;
+      foundCycles[node.id] = [];
+      this._recursiveCycleSearch(node, node, counter, foundCycles, incidents);
     }
+
+    console.log(foundCycles);
   }
 
-  private _recursiveCycleSearch(start: INode, currentNode: INode, counter: number, nodes: number[], incidents: {[index: number]: number[]}): number[] {
-    return [];
+  private _recursiveCycleSearch(cycleStart: INode, currentNode: INode, jumps: number, nodes: {[index: number]: number[]}, incidents: {[index: number]: number[]}): void {
+    nodes[cycleStart.id].push(currentNode.id);
+
+    if (jumps === 0) {
+      const cycleLinkAsTarget = this._links.find(link => {
+        return link.target === cycleStart && link.source === currentNode;
+      });
+
+      if (cycleLinkAsTarget) {
+        nodes[cycleStart.id].push(cycleStart.id);
+      }
+
+      const cycleLinkAsSource = this._links.find(link => {
+        return link.source === cycleStart && link.target === currentNode;
+      });
+
+      if (cycleLinkAsSource) {
+        nodes[cycleStart.id].push(cycleStart.id);
+      }
+
+      return;
+    }
+
+    const connectedNodes = incidents[currentNode.id];
+
+    if (!connectedNodes || (connectedNodes && !connectedNodes.length)) {
+      return;
+    }
+
+    for (const connectedNode of connectedNodes) {
+      const newCurrentNodeAsTarget = this._links.find(link => {
+        return link.target.id === connectedNode && link.source.id !== currentNode.id;
+      });
+
+      if (newCurrentNodeAsTarget) {
+        let newJump = jumps - 1;
+        this._recursiveCycleSearch(cycleStart, newCurrentNodeAsTarget.target, newJump, nodes, incidents);
+      }
+
+      const newCurrentNodeAsSource = this._links.find(link => {
+        return link.source.id === connectedNode && link.target.id !== currentNode.id;
+      });
+
+      if (newCurrentNodeAsSource) {
+        let newJump = jumps - 1;
+        this._recursiveCycleSearch(cycleStart, newCurrentNodeAsSource.source, newJump, nodes, incidents);
+      }
+    }
+
+    return;
   }
 
   private _prepareListOfIncidents(): void {
