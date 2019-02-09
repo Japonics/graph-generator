@@ -1,12 +1,4 @@
-import {
-  Component,
-  OnInit,
-  AfterViewInit,
-  ElementRef,
-  ViewChild,
-  Input,
-  OnDestroy
-} from '@angular/core';
+import {Component, OnInit, AfterViewInit, ElementRef, ViewChild, Input, OnDestroy} from '@angular/core';
 import * as d3 from 'd3';
 import {IGraphGenerationConfig} from '../../interfaces/graph-generation-config.interface';
 import {Subject, Subscription} from 'rxjs';
@@ -25,13 +17,16 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input() logger: Subject<HTMLDivElement>;
   @Input() onRegenerateNeighborhoodMatrix: Subject<boolean> = new Subject<boolean>();
   @Input() onRegenerateListOfIncidents: Subject<boolean> = new Subject<boolean>();
+  @Input() onRegenerateWeights: Subject<boolean> = new Subject<boolean>();
   @Input() onSearch3Cycles: Subject<boolean> = new Subject<boolean>();
   @Input() onSearch4Cycles: Subject<boolean> = new Subject<boolean>();
+  @Input() generateSummaryFile: Subject<boolean> = new Subject<boolean>();
 
   @ViewChild('canvas', {read: ElementRef}) canvas: ElementRef;
 
   private _nodes: INode[] = [];
   private _links: ILink[] = [];
+  private _usedConfig: IGraphGenerationConfig = null;
   private _force: any = null;
   private _canvas: any = null;
   private _drag: any = null;
@@ -88,6 +83,18 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         this._searchForCycles(4);
       });
     }
+
+    if (this.onRegenerateWeights) {
+      this.subscriptions = this.onRegenerateWeights.subscribe(() => {
+        this._generateWeights();
+      });
+    }
+
+    if (this.generateSummaryFile) {
+      this.subscriptions = this.generateSummaryFile.subscribe(() => {
+        this._generateSummaryFile();
+      });
+    }
   }
 
   public ngAfterViewInit(): void {
@@ -96,33 +103,22 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     //  - reflexive edges are indicated on the node (as a bold black circle).
     //  - links are always source < target; edge directions are set by 'left' and 'right'.
     this._nodes = [
-      {id: 0, reflexive: false},
-      {id: 1, reflexive: true},
-      {id: 2, reflexive: false},
-      {id: 3, reflexive: false},
-      {id: 4, reflexive: false},
-      {id: 5, reflexive: false},
-      {id: 6, reflexive: false},
-      {id: 7, reflexive: false},
-      {id: 8, reflexive: false},
-      {id: 9, reflexive: false}
+      {id: 0, reflexive: false}
     ];
 
-    this._links = [
-      {source: this._nodes[0], target: this._nodes[1], left: true, right: true},
-      {source: this._nodes[1], target: this._nodes[2], left: true, right: true},
-      {source: this._nodes[2], target: this._nodes[3], left: true, right: true},
-      {source: this._nodes[3], target: this._nodes[4], left: true, right: true},
-      {source: this._nodes[4], target: this._nodes[5], left: true, right: true},
-      {source: this._nodes[5], target: this._nodes[6], left: true, right: true},
-      {source: this._nodes[6], target: this._nodes[7], left: true, right: true},
-      {source: this._nodes[7], target: this._nodes[8], left: true, right: true},
-      {source: this._nodes[8], target: this._nodes[9], left: true, right: true},
-    ];
+    this._links = [];
 
     this._createCanvas();
-    this._prepareNeighborhoodMatrix();
-    this._prepareListOfIncidents();
+
+    const config: IGraphGenerationConfig = {
+      edges: 3,
+      probability: 50,
+      vertex: 8
+    };
+
+    setTimeout(() => {
+      this._prepareRenderConfig(config);
+    }, 1000);
   }
 
   public ngOnDestroy(): void {
@@ -133,6 +129,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     const assignedVertex: { [index: number]: number } = {};
     this._nodes = [];
     this._links = [];
+    this._usedConfig = config;
 
     for (let index = 0; index < config.vertex; index++) {
       const node: INode = {
@@ -157,11 +154,20 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
             assignedVertex[currentNode] = 0;
           }
 
+          if (assignedVertex[linkNode] === undefined) {
+            assignedVertex[linkNode] = 0;
+          }
+
           if (assignedVertex[currentNode] >= config.edges) {
             continue;
           }
 
-          assignedVertex[currentNode]++;
+          if (assignedVertex[linkNode] >= config.edges) {
+            continue;
+          }
+
+          assignedVertex[currentNode] += 1;
+          assignedVertex[linkNode] += 1;
 
           const link: ILink = {
             source: this._nodes[currentNode],
@@ -175,12 +181,10 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
 
-    this._prepareNeighborhoodMatrix();
-    this._prepareListOfIncidents();
     this.restart();
   }
 
-  private _prepareNeighborhoodMatrix(): void {
+  private _prepareNeighborhoodMatrix(): HTMLDivElement {
     const matrix: any = {};
     const tableHeader: HTMLTableSectionElement = document.createElement('thead');
     const tableBody: HTMLTableSectionElement = document.createElement('tbody');
@@ -246,13 +250,13 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.logger.next(message);
 
-    return;
+    return message;
   }
 
-  private _searchForCycles(nodeForCycles: number): void {
+  private _searchForCycles(nodeForCycles: number): HTMLDivElement {
 
-    const incidents: {[index: number]: number[]} = this._prepareListOfIncidentsAlgorithm();
-    const result: {[index: number]: Array<number[]>} = {};
+    const incidents: { [index: number]: number[] } = this._prepareListOfIncidentsAlgorithm();
+    const result: { [index: number]: Array<number[]> } = {};
 
     for (const node of this._nodes) {
       let counter: number = nodeForCycles;
@@ -260,17 +264,61 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
       if (incidents[node.id] && incidents[node.id].length > 1) {
         this._recursiveCycleSearch(node.id, node.id, counter, [node.id], incidents, result);
-        console.log(result);
       }
     }
+
+    const uniqueCycles: Array<string> = [];
+
+    for (const vertex of Object.keys(result)) {
+      const cyclesForVertex: Array<number[]> = result[vertex];
+
+      if (!cyclesForVertex.length) {
+        continue;
+      }
+
+      for (const cycleOfVertex of cyclesForVertex) {
+        const asString = cycleOfVertex.join(';');
+
+        if (!uniqueCycles.some(uniqueCycle => uniqueCycle === asString)) {
+          uniqueCycles.push(asString);
+        }
+      }
+    }
+
+    const message = document.createElement('div');
+    message.className = 'message-container';
+    const header = document.createElement('p');
+    header.innerText = `Found ${nodeForCycles}-cycles:`;
+    header.className = 'message-header';
+    message.append(header);
+    const separator = document.createElement('br');
+    message.append(separator);
+    const table = document.createElement('table');
+    const tableBody = document.createElement('tbody');
+
+    for (const uniqueCycle of uniqueCycles) {
+
+      const row = document.createElement('tr');
+      const singleCell = document.createElement('td');
+      singleCell.innerText = uniqueCycle;
+      row.append(singleCell);
+      tableBody.append(row);
+    }
+
+    table.append(tableBody);
+    message.append(table);
+
+    this.logger.next(message);
+
+    return message;
   }
 
   private _recursiveCycleSearch(cycleStart: number,
                                 currentNode: number,
                                 jumps: number,
                                 nodes: number[],
-                                incidents: {[index: number]: number[]},
-                                result: {[index: number]: number[][]}): void {
+                                incidents: { [index: number]: number[] },
+                                result: { [index: number]: number[][] }): void {
     if (jumps === 0) {
       const lastIncidents = incidents[currentNode];
 
@@ -283,7 +331,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       });
 
       if (!cycleLink) {
-        return ;
+        return;
       }
 
       result[cycleStart].push(nodes);
@@ -314,8 +362,8 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this._printListOfIncidents(matrix);
   }
 
-  private _prepareListOfIncidentsAlgorithm(): {[index: number]: number[]} {
-    const matrix: {[index: number]: number[]} = {};
+  private _prepareListOfIncidentsAlgorithm(): { [index: number]: number[] } {
+    const matrix: { [index: number]: number[] } = {};
 
     this._links.map(link => {
       if (!matrix[link.source.id]) {
@@ -346,7 +394,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     return matrix;
   }
 
-  private _printListOfIncidents(matrix: {[index: number]: number[]}): void {
+  private _printListOfIncidents(matrix: { [index: number]: number[] }): HTMLDivElement {
     const message = document.createElement('div');
     message.className = 'message-container';
     const header = document.createElement('p');
@@ -356,7 +404,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     const separator = document.createElement('br');
     message.append(separator);
     const table = document.createElement('table');
-    const tableBody = document.createElement('thead');
+    const tableBody = document.createElement('tbody');
 
 
     for (const id in matrix) {
@@ -384,6 +432,212 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     message.append(table);
 
     this.logger.next(message);
+
+    return message;
+  }
+
+  private _generateWeights(): HTMLDivElement {
+
+    const result: { [index: number]: number } = {};
+
+    this._links.map(link => {
+      if (result[link.target.id] === undefined) {
+        result[link.target.id] = 0;
+      }
+
+      if (result[link.source.id] === undefined) {
+        result[link.source.id] = 0;
+      }
+
+      result[link.source.id] += 1;
+      result[link.target.id] += 1;
+    });
+
+    const message = document.createElement('div');
+    message.className = 'message-container';
+    const header = document.createElement('p');
+    header.innerText = 'Weights:';
+    header.className = 'message-header';
+    message.append(header);
+    const separator = document.createElement('br');
+    message.append(separator);
+    const table = document.createElement('table');
+    const tableHead = document.createElement('thead');
+    const tableBody = document.createElement('tbody');
+    const tableHeadRow = document.createElement('tr');
+    const tableHearVertexHeader = document.createElement('td');
+    tableHearVertexHeader.innerText = 'Vertex';
+    const tableHearWeightHeader = document.createElement('td');
+    tableHearWeightHeader.innerText = 'Weight';
+
+    tableHeadRow.append(tableHearVertexHeader, tableHearWeightHeader);
+    tableHead.append(tableHeadRow);
+
+    for (const vertex of Object.keys(result)) {
+
+      const vertexRow = document.createElement('tr');
+      const vertexCell = document.createElement('td');
+      vertexCell.innerText = vertex.toString();
+      const weightCell = document.createElement('td');
+      weightCell.innerText = result[vertex].toString();
+
+      vertexRow.append(vertexCell, weightCell);
+      tableBody.append(vertexRow);
+    }
+
+    table.append(tableHead, tableBody);
+    message.append(table);
+
+    this.logger.next(message);
+
+    return message;
+  }
+
+  private _generateSummaryFile(): void {
+
+    const summary = document.createElement('html');
+    const head = document.createElement('head');
+    const title = document.createElement('title');
+    const styles = document.createElement('style');
+    styles.innerHTML = `svg {
+        background-color: #FFF;
+        cursor: default;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -o-user-select: none;
+        user-select: none;
+      }
+      
+      svg:not(.active):not(.ctrl) {
+        cursor: crosshair;
+      }
+      
+      path.link {
+        fill: none;
+        stroke: #000;
+        stroke-width: 4px;
+        cursor: default;
+      }
+      
+      svg:not(.active):not(.ctrl) path.link {
+        cursor: pointer;
+      }
+      
+      path.link.selected {
+        stroke-dasharray: 10,2;
+      }
+      
+      path.link.dragline {
+        pointer-events: none;
+      }
+      
+      path.link.hidden {
+        stroke-width: 0;
+      }
+      
+      circle.node {
+        stroke-width: 1.5px;
+        cursor: pointer;
+      }
+      
+      circle.node.reflexive {
+        stroke: #000 !important;
+        stroke-width: 2.5px;
+      }
+      
+      text {
+        font: 12px sans-serif;
+        pointer-events: none;
+      }
+      
+      text.id {
+        text-anchor: middle;
+        font-weight: bold;
+      }`;
+    
+    title.innerText = 'Graph generator summary';
+    head.append(title, styles);
+
+    const body = document.createElement('body');
+
+    // Input data section
+    const inputDataSection: HTMLDivElement = this._prepareInputDataSection();
+
+    console.log(this._canvas);
+    // Graph section
+    const svgContainer = this._canvas._groups[0][0];
+
+    // Neighborhood section
+    const neighborhoodSection: HTMLDivElement = this._prepareNeighborhoodMatrix();
+
+    // List of incidents section
+    const listOfIncidents = this._prepareListOfIncidentsAlgorithm();
+    const listOfIncidentsSection: HTMLDivElement = this._printListOfIncidents(listOfIncidents);
+
+    // Weights section
+    const weightsSection: HTMLDivElement = this._generateWeights();
+
+    // 3-cycles section
+    const threeCycleSection: HTMLDivElement = this._searchForCycles(4);
+
+    // 4-cycles section
+    const fourCycleSection: HTMLDivElement = this._searchForCycles(4);
+
+    body.append(inputDataSection, svgContainer, neighborhoodSection, listOfIncidentsSection, weightsSection, threeCycleSection, fourCycleSection);
+    summary.append(head, body);
+
+    const element = document.createElement('a');
+    element.setAttribute('href', 'data:text/html;charset=utf-8,' + encodeURIComponent(summary.innerHTML));
+    element.setAttribute('download', 'summary.html');
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+  }
+
+  private _prepareInputDataSection(): HTMLDivElement {
+
+    const message = document.createElement('div');
+    message.className = 'message-container';
+    const header = document.createElement('p');
+    header.innerText = 'Input data:';
+    header.className = 'message-header';
+    message.append(header);
+    const separator = document.createElement('br');
+    message.append(separator);
+    const table = document.createElement('table');
+    const tableBody = document.createElement('tbody');
+
+    const probabilityRow = document.createElement('tr');
+    const probabilityCellLabel = document.createElement('td');
+    probabilityCellLabel.innerText = 'Probability:';
+    const probabilityCellValue = document.createElement('td');
+    probabilityCellValue.innerText = this._usedConfig.probability.toString() + '%';
+    probabilityRow.append(probabilityCellLabel, probabilityCellValue);
+
+    const vertexCountRow = document.createElement('tr');
+    const vertexCountCellLabel = document.createElement('td');
+    vertexCountCellLabel.innerText = 'Vertex count:';
+    const vertexCountCellValue = document.createElement('td');
+    vertexCountCellValue.innerText = this._usedConfig.vertex.toString();
+    vertexCountRow.append(vertexCountCellLabel, vertexCountCellValue);
+
+    const maxEdgesRow = document.createElement('tr');
+    const maxEdgesCellLabel = document.createElement('td');
+    maxEdgesCellLabel.innerText = 'Max edges for vertex:';
+    const maxEdgesCellValue = document.createElement('td');
+    maxEdgesCellValue.innerText = this._usedConfig.edges.toString();
+    maxEdgesRow.append(maxEdgesCellLabel, maxEdgesCellValue);
+
+    tableBody.append(probabilityRow, vertexCountRow, maxEdgesRow);
+    table.append(tableBody);
+    message.append(table);
+
+    return message;
   }
 
   private _createCanvas(): void {
@@ -760,7 +1014,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this._selectedNode = null;
     this.restart();
   };
-
 
   public mousedown = (elem): void => {
     // because :active only works in WebKit?
