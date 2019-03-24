@@ -555,7 +555,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         text-anchor: middle;
         font-weight: bold;
       }`;
-    
+
     title.innerText = 'Graph generator summary';
     head.append(title, styles);
 
